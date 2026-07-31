@@ -1,0 +1,43 @@
+name: Security and reproducibility
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-and-secret-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore exactly the committed dependency graph
+        run: dotnet restore WpfAiAutomation.slnx --locked-mode
+
+      - name: Verify central versions and lock files
+        shell: pwsh
+        run: ./scripts/Assert-CentralPackageManagement.ps1
+
+      - name: Fail on vulnerable dependencies
+        shell: pwsh
+        run: ./scripts/Assert-NoVulnerablePackages.ps1
+
+      - name: Scan repository history for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

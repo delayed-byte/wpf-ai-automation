@@ -1,0 +1,58 @@
+name: Build and unit verification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore locked dependencies
+        run: dotnet restore WpfAiAutomation.slnx --locked-mode
+
+      - name: Verify central package management
+        shell: pwsh
+        run: ./scripts/Assert-CentralPackageManagement.ps1
+
+      - name: Build
+        run: dotnet build WpfAiAutomation.slnx -c Release --no-restore
+
+      - name: Run unit and integration tests
+        run: >-
+          dotnet test tests/WpfAiAutomation.UnitTests/WpfAiAutomation.UnitTests.csproj -c Release --no-build
+          --logger "trx;LogFileName=unit.trx" --results-directory TestResults/unit
+
+      - name: Run boundary integration tests
+        run: >-
+          dotnet test tests/WpfAiAutomation.IntegrationTests/WpfAiAutomation.IntegrationTests.csproj -c Release --no-build
+          --logger "trx;LogFileName=integration.trx" --results-directory TestResults/integration
+
+      - name: Validate quarantined generated proposal
+        run: dotnet build tests/WpfAiAutomation.GeneratedValidation/WpfAiAutomation.GeneratedValidation.csproj -c Release --no-restore
+
+      - name: Publish build and test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-and-unit-results
+          path: |
+            TestResults/
+            **/bin/Release/**
+          if-no-files-found: warn
+          retention-days: 30

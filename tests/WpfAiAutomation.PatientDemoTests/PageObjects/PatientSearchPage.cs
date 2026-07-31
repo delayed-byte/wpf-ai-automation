@@ -14,6 +14,8 @@ public sealed class PatientSearchPage
     private readonly UiStateService _state;
     private readonly string _sessionId;
 
+    public Action<PatientSearchOperation>? OperationObserver { get; set; }
+
     public PatientSearchPage(
         AutomationSessionManager sessionManager,
         UiActionService actions,
@@ -35,6 +37,7 @@ public sealed class PatientSearchPage
             new SetTextRequest(_sessionId, PatientId, patientId),
             cancellationToken).ConfigureAwait(false);
 
+        Report(AutomationAction.SetText, PatientId, result, result.Value?.After, result.Value?.Before, result.Value?.After);
         EnsureSucceeded(result, "Patient ID entry failed.");
     }
 
@@ -45,6 +48,7 @@ public sealed class PatientSearchPage
             new InvokeRequest(_sessionId, SearchButton),
             cancellationToken).ConfigureAwait(false);
 
+        Report(AutomationAction.Invoke, SearchButton, result, result.Value?.After, result.Value?.Before, result.Value?.After);
         EnsureSucceeded(result, "Patient search could not be invoked.");
     }
 
@@ -72,9 +76,28 @@ public sealed class PatientSearchPage
                 TimeoutMilliseconds: timeoutMilliseconds),
             cancellationToken).ConfigureAwait(false);
 
+        Report(AutomationAction.WaitFor, StatusMessage, result, result.Value?.Element, result.Value?.Element, result.Value?.Element);
         EnsureSucceeded(result, "The patient search result did not become ready.");
         return result.Value!.Value ?? string.Empty;
     }
+
+    private void Report<T>(
+        AutomationAction action,
+        ElementLocator target,
+        ToolResult<T> result,
+        ElementSnapshot? resolvedElement,
+        ElementSnapshot? before,
+        ElementSnapshot? after) =>
+        OperationObserver?.Invoke(new PatientSearchOperation(
+            action,
+            target,
+            resolvedElement,
+            before,
+            after,
+            result.Succeeded,
+            result.ErrorCode,
+            result.DurationMilliseconds,
+            result.CorrelationId));
 
     private static void EnsureSucceeded<T>(ToolResult<T> result, string fallbackMessage)
     {
@@ -86,6 +109,17 @@ public sealed class PatientSearchPage
         }
     }
 }
+
+public sealed record PatientSearchOperation(
+    AutomationAction Action,
+    ElementLocator Target,
+    ElementSnapshot? ResolvedElement,
+    ElementSnapshot? Before,
+    ElementSnapshot? After,
+    bool Succeeded,
+    ToolErrorCode? ErrorCode,
+    long DurationMilliseconds,
+    string CorrelationId);
 
 public sealed class PatientSearchPageException(ToolErrorCode errorCode, string message) : Exception(message)
 {

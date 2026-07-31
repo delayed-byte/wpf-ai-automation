@@ -134,3 +134,45 @@ Validate quarantined candidates without executing them:
 ```powershell
 dotnet build tests/WpfAiAutomation.GeneratedValidation -c Release
 ```
+
+## Phase 6: CI, reporting, and operational hardening
+
+Phase 6 is complete. GitHub Actions now separates normal build/unit verification
+from the desktop smoke suite:
+
+- `build-and-unit.yml` restores the committed lock graph, builds, runs unit and
+  boundary integration tests, and validates the quarantined proposal.
+- `security-and-reproducibility.yml` verifies central package management and
+  lock files, reports vulnerable direct and transitive packages, and scans the
+  repository history for secrets.
+- `patient-demo-smoke.yml` runs only on the dedicated labeled self-hosted
+  Windows runner. It is serialized with `patient-demo-interactive-desktop` and
+  has read-only repository permissions, so it cannot make model-driven source
+  changes. It is deliberately not triggered by pull requests.
+
+Provision the `self-hosted`, `windows`, `patient-demo`, and `interactive`
+runner labels on a dedicated Windows host. Start the runner in the same
+unlocked user session that owns the desktop; set display scaling to 100%; install
+the Patient Demo prerequisites; and set these runner environment variables:
+
+```text
+WPF_AI_AUTOMATION_CONFIG=C:\Automation\patient-demo\automation.json
+PATIENT_DEMO_LOG_DIRECTORY=C:\Automation\patient-demo\logs
+```
+
+The configuration remains an allowlist and must name the exact Patient Demo
+executable and process. The smoke workflow overrides only its evidence root
+inside the checked-out workspace. Its preflight rejects a non-interactive,
+locked/no-Explorer, non-100%-DPI, or incorrectly configured desktop.
+
+Each desktop run always uploads TRX results, JSONL evidence, screenshots,
+per-run application-version metadata, timing percentiles, and recent configured
+application logs. Artifact retention is 30 days. The cleanup script stops a
+process only when a workspace-owned lease has the current CI run ID and both its
+process name and resolved executable path exactly match the configured Patient
+Demo entry; it never enumerates and kills processes merely by name.
+
+Evidence reports P50/P95/max timings for startup, lookup (`waitFor`), action,
+and scenario durations in `artifacts/timing-summary/`. Treat the resulting
+percentiles as the source for changing defaults: revise the configured ceilings
+only after a sustained baseline change, not in response to an isolated timeout.

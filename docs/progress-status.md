@@ -62,9 +62,33 @@ Last updated: 2026-07-31
   generated proposal was compared with the hand-written reference and left in
   quarantine because it adds no new coverage.
 
+### Phase 6 — CI, reporting, and operational hardening
+
+- Separate GitHub Actions workflows now cover locked restore/build/unit
+  verification, security and reproducibility review, and the serialized Patient
+  Demo desktop smoke suite. The desktop workflow is restricted to the dedicated
+  labeled interactive self-hosted Windows runner, is not PR-triggered, and has
+  read-only repository permissions.
+- Desktop preflight verifies Windows, an interactive unlocked Explorer session,
+  100% DPI scaling, and the configured allowlisted Patient Demo executable.
+  A repository-wide concurrency group prevents two desktop jobs from sharing a
+  UI session.
+- Desktop runs always retain TRX files, JSONL evidence, screenshots, application
+  logs, run metadata including the application version, and P50/P95/max timing
+  reports for 30 days, including failed executions.
+- The test fixture records the actual UI operation target and before/after state
+  in evidence. It records startup and scenario duration plus application version
+  per run, allowing the reporting script to measure startup, lookup, action, and
+  scenario baselines.
+- Orphan cleanup is lease-based: it only stops a process recorded by the
+  workspace, with a CI-scoped run ID, when both its process name and canonical
+  executable path match the configured Patient Demo. Central package versions,
+  committed lock files, locked restores, package vulnerability reporting, and
+  repository secret scanning are now CI gates.
+
 ## Verification
 
-The latest Phase 5 verification passed:
+The latest Phase 6 verification passed:
 
 ```powershell
 dotnet test WpfAiAutomation.slnx --no-restore -c Release
@@ -102,8 +126,15 @@ dotnet run --project apps/AgentServer -- mcp
 The second command returns `AssertionFailed` and emits complete failed-step
 evidence with a redacted screenshot artifact.
 
+## Operations
+
+The self-hosted desktop workflow requires an unlocked dedicated Windows session,
+100% display scaling, the Patient Demo prerequisites, and a runner-local
+`WPF_AI_AUTOMATION_CONFIG` path. It serializes all UI work globally and uploads
+the full test evidence set for 30 days even after a failure. `README.md`
+documents runner provisioning, artifact contents, and the percentile-based
+timeout tuning policy.
+
 ## Next
 
-Phase 6 will add separate build/unit and serialized desktop-smoke CI workflows,
-artifact publication, runner preflight and orphan cleanup, dependency/security
-checks, and measured timeout baselines.
+Phase 7 should add only controls and operations justified by demonstrated need.

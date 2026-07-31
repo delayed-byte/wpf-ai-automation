@@ -1,0 +1,76 @@
+name: Patient Demo desktop smoke
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '47 5 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: patient-demo-interactive-desktop
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, windows, patient-demo, interactive]
+    timeout-minutes: 30
+    env:
+      WPF_AI_AUTOMATION_EVIDENCE_ROOT: ${{ github.workspace }}\artifacts
+      WPF_AI_AUTOMATION_PROCESS_LEASE_DIRECTORY: ${{ github.workspace }}\artifacts\process-leases
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Validate interactive desktop and Patient Demo prerequisites
+        shell: pwsh
+        run: ./scripts/Test-DesktopRunner.ps1 -ConfigurationPath $env:WPF_AI_AUTOMATION_CONFIG
+
+      - name: Clean workspace-owned orphaned Patient Demo processes
+        shell: pwsh
+        run: ./scripts/Stop-PatientDemoOrphans.ps1 -ConfigurationPath $env:WPF_AI_AUTOMATION_CONFIG -LeaseDirectory $env:WPF_AI_AUTOMATION_PROCESS_LEASE_DIRECTORY
+
+      - name: Restore locked dependencies
+        run: dotnet restore WpfAiAutomation.slnx --locked-mode
+
+      - name: Run serialized Patient Demo smoke test
+        run: >-
+          dotnet test tests/WpfAiAutomation.PatientDemoTests/WpfAiAutomation.PatientDemoTests.csproj -c Release --no-restore
+          --filter "Category=Smoke" --logger "trx;LogFileName=patient-demo-smoke.trx"
+          --results-directory TestResults/patient-demo
+
+      - name: Summarize observed durations
+        if: always()
+        shell: pwsh
+        run: ./scripts/Measure-EvidenceTimings.ps1 -EvidenceDirectory $env:WPF_AI_AUTOMATION_EVIDENCE_ROOT
+
+      - name: Collect Patient Demo application logs
+        if: always()
+        shell: pwsh
+        run: ./scripts/Collect-PatientDemoLogs.ps1 -DestinationDirectory artifacts/application-logs
+
+      - name: Clean workspace-owned Patient Demo processes after test execution
+        if: always()
+        shell: pwsh
+        run: ./scripts/Stop-PatientDemoOrphans.ps1 -ConfigurationPath $env:WPF_AI_AUTOMATION_CONFIG -LeaseDirectory $env:WPF_AI_AUTOMATION_PROCESS_LEASE_DIRECTORY
+
+      - name: Publish desktop test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: patient-demo-evidence-${{ github.run_id }}
+          path: |
+            TestResults/patient-demo/
+            artifacts/
+          if-no-files-found: warn
+          retention-days: 30

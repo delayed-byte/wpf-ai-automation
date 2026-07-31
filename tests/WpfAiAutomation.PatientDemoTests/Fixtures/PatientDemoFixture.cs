@@ -14,6 +14,9 @@ public sealed class PatientDemoFixture : IAsyncLifetime
     private AutomationSessionManager? _sessionManager;
     private RedactedScreenshotService? _screenshots;
     private string? _sessionId;
+    private AutomationSessionInfo? _sessionInfo;
+    private long _startupDurationMilliseconds;
+    private string? _processLeasePath;
 
     public PatientSearchPage Page { get; private set; } = null!;
 
@@ -25,14 +28,18 @@ public sealed class PatientDemoFixture : IAsyncLifetime
         _sessionManager = new AutomationSessionManager(new ApplicationCatalog(_configuration), inspector);
         _screenshots = new RedactedScreenshotService(_configuration.Evidence, redactor);
 
+        var startup = Stopwatch.StartNew();
         var launch = await _sessionManager.LaunchAsync(new ApplicationLaunchRequest("patient-demo")).ConfigureAwait(false);
+        _startupDurationMilliseconds = startup.ElapsedMilliseconds;
         if (!launch.Succeeded || launch.Value is null)
         {
             throw new InvalidOperationException(launch.Message ?? "Patient Demo could not be launched.");
         }
 
         _sessionId = launch.Value.SessionId;
+        _sessionInfo = launch.Value;
         Page = new PatientSearchPage(_sessionManager, new UiActionService(inspector), new UiStateService(inspector), _sessionId);
+        _processLeasePath = await CreateProcessLeaseAsync(launch.Value).ConfigureAwait(false);
     }
 
     public async Task RunWithFailureEvidenceAsync(string testId, Func<PatientSearchPage, Task> test)
@@ -45,25 +52,37 @@ public sealed class PatientDemoFixture : IAsyncLifetime
         await using var recorder = await EvidenceRecorder.CreateAsync(_configuration!.Evidence, runId, testId).ConfigureAwait(false);
         var startedAtUtc = DateTimeOffset.UtcNow;
         var stopwatch = Stopwatch.StartNew();
+        var operations = new List<PatientSearchOperation>();
+        Page.OperationObserver = operations.Add;
 
         try
         {
             await test(Page).ConfigureAwait(false);
+            await RecordOperationsAsync(recorder, runId, testId, operations).ConfigureAwait(false);
+            await WriteRunMetadataAsync(recorder.DirectoryPath, runId, testId, stopwatch.ElapsedMilliseconds).ConfigureAwait(false);
             await recorder.AppendAsync(CreateEvidenceEvent(
-                runId, testId, startedAtUtc, stopwatch.ElapsedMilliseconds, EvidenceResult.Passed, null, null)).ConfigureAwait(false);
+                runId, testId, operations.Count + 1, startedAtUtc, stopwatch.ElapsedMilliseconds, EvidenceResult.Passed, null, null, operations.LastOrDefault())).ConfigureAwait(false);
         }
         catch
         {
+            await RecordOperationsAsync(recorder, runId, testId, operations).ConfigureAwait(false);
+            await WriteRunMetadataAsync(recorder.DirectoryPath, runId, testId, stopwatch.ElapsedMilliseconds).ConfigureAwait(false);
             var artifacts = await CaptureFailureScreenshotAsync(runId, testId).ConfigureAwait(false);
             await recorder.AppendAsync(CreateEvidenceEvent(
                 runId,
                 testId,
+                operations.Count + 1,
                 startedAtUtc,
                 stopwatch.ElapsedMilliseconds,
                 EvidenceResult.Failed,
                 ToolErrorCode.AssertionFailed,
-                artifacts)).ConfigureAwait(false);
+                artifacts,
+                operations.LastOrDefault())).ConfigureAwait(false);
             throw;
+        }
+        finally
+        {
+            Page.OperationObserver = null;
         }
     }
 
@@ -72,6 +91,11 @@ public sealed class PatientDemoFixture : IAsyncLifetime
         if (_sessionManager is not null)
         {
             await _sessionManager.DisposeAsync().ConfigureAwait(false);
+        }
+
+        if (_processLeasePath is not null && IsProcessExited(_sessionInfo?.ProcessId))
+        {
+            File.Delete(_processLeasePath);
         }
     }
 
@@ -89,18 +113,20 @@ public sealed class PatientDemoFixture : IAsyncLifetime
     private static EvidenceEvent CreateEvidenceEvent(
         string runId,
         string testId,
+        int stepNumber,
         DateTimeOffset startedAtUtc,
         long durationMilliseconds,
         EvidenceResult result,
         ToolErrorCode? errorCode,
-        IReadOnlyList<EvidenceReference>? artifacts) => new(
+        IReadOnlyList<EvidenceReference>? artifacts,
+        PatientSearchOperation? lastOperation) => new(
             runId,
             testId,
-            1,
+            stepNumber,
             AutomationAction.Assert,
-            null,
-            null,
-            null,
+            lastOperation?.ResolvedElement,
+            lastOperation?.Before,
+            lastOperation?.After,
             result,
             errorCode,
             startedAtUtc,
@@ -108,6 +134,85 @@ public sealed class PatientDemoFixture : IAsyncLifetime
             durationMilliseconds,
             artifacts,
             Guid.NewGuid().ToString("N"));
+
+    private static async Task RecordOperationsAsync(
+        EvidenceRecorder recorder,
+        string runId,
+        string testId,
+        IReadOnlyList<PatientSearchOperation> operations)
+    {
+        var stepNumber = 1;
+        foreach (var operation in operations)
+        {
+            var completedAtUtc = DateTimeOffset.UtcNow;
+            await recorder.AppendAsync(new EvidenceEvent(
+                runId,
+                testId,
+                stepNumber++,
+                operation.Action,
+                operation.ResolvedElement,
+                operation.Before,
+                operation.After,
+                operation.Succeeded ? EvidenceResult.Passed : EvidenceResult.Failed,
+                operation.ErrorCode,
+                completedAtUtc - TimeSpan.FromMilliseconds(operation.DurationMilliseconds),
+                completedAtUtc,
+                operation.DurationMilliseconds,
+                CorrelationId: operation.CorrelationId)).ConfigureAwait(false);
+        }
+    }
+
+    private async Task WriteRunMetadataAsync(string directory, string runId, string testId, long scenarioDurationMilliseconds)
+    {
+        var metadata = new RegressionRunMetadata(
+            runId,
+            testId,
+            _sessionInfo!.ApplicationVersion,
+            _sessionInfo.ProcessId,
+            _startupDurationMilliseconds,
+            scenarioDurationMilliseconds);
+        await File.WriteAllTextAsync(Path.Combine(directory, "run-metadata.json"), ContractsJson.Serialize(metadata)).ConfigureAwait(false);
+    }
+
+    private async Task<string> CreateProcessLeaseAsync(AutomationSessionInfo session)
+    {
+        var directory = Environment.GetEnvironmentVariable("WPF_AI_AUTOMATION_PROCESS_LEASE_DIRECTORY");
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            directory = Path.Combine(_configuration!.Evidence.RootDirectory, "process-leases");
+        }
+
+        directory = Path.GetFullPath(directory);
+        Directory.CreateDirectory(directory);
+        var runId = $"ci-{Environment.GetEnvironmentVariable("GITHUB_RUN_ID") ?? "local"}-{Guid.NewGuid():N}";
+        var lease = new PatientDemoProcessLease(
+            runId,
+            session.ProcessId,
+            _configuration!.Applications["patient-demo"].ProcessName,
+            _configuration.Applications["patient-demo"].ExecutablePath,
+            DateTimeOffset.UtcNow);
+        var path = Path.Combine(directory, $"{session.SessionId}.json");
+        await File.WriteAllTextAsync(path, ContractsJson.Serialize(lease)).ConfigureAwait(false);
+        return path;
+    }
+
+    private static bool IsProcessExited(int? processId)
+    {
+        if (processId is null)
+        {
+            return true;
+        }
+
+        try
+        {
+            using var process = Process.GetProcessById(processId.Value);
+            return process.HasExited;
+        }
+        catch (ArgumentException)
+        {
+            return true;
+        }
+    }
 
     private void EnsureInitialized()
     {
@@ -117,3 +222,18 @@ public sealed class PatientDemoFixture : IAsyncLifetime
         }
     }
 }
+
+internal sealed record RegressionRunMetadata(
+    string RunId,
+    string TestId,
+    string? ApplicationVersion,
+    int ProcessId,
+    long StartupDurationMilliseconds,
+    long ScenarioDurationMilliseconds);
+
+internal sealed record PatientDemoProcessLease(
+    string RunId,
+    int ProcessId,
+    string ProcessName,
+    string ExecutablePath,
+    DateTimeOffset CreatedAtUtc);
