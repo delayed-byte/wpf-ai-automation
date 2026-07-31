@@ -5,7 +5,9 @@
       "processName": "PatientDemo",
       "allowedArguments": [],
       "startupTimeoutCeilingMilliseconds": 30000,
-      "versionProbe": null
+      "versionProbe": null,
+      "closeTimeoutMilliseconds": 10000,
+      "allowForcedTermination": false
     }
   },
   "policy": {
@@ -17,7 +19,7 @@
     "maximumTreeElementCount": 1000
   },
   "sensitiveControls": {
-    "automationIds": ["PasswordTextBox", "PatientSsnTextBox"],
+    "automationIds": ["PasswordTextBox", "PatientSsnTextBox", "PatientResultsGrid"],
     "redactionReplacement": "[REDACTED]"
   },
   "evidence": {

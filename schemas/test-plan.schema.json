@@ -35,7 +35,7 @@
     "nonEmptyString": { "type": "string", "minLength": 1, "maxLength": 4096 },
     "timeout": { "type": "integer", "minimum": 1, "maximum": 60000 },
     "stepNumber": { "type": "integer", "minimum": 1 },
-    "controlType": { "enum": ["button", "checkBox", "comboBox", "edit", "list", "listItem", "text", "window"] },
+    "controlType": { "enum": ["unknown", "button", "checkBox", "comboBox", "edit", "list", "listItem", "text", "window"] },
     "property": { "enum": ["exists", "name", "value", "enabled", "visible"] },
     "operator": { "enum": ["exists", "notExists", "equals", "notEquals", "contains", "notEmpty", "enabled", "visible"] },
     "target": {

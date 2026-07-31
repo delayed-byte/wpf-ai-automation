@@ -11,7 +11,9 @@ public sealed record ApplicationCatalogEntry(
     string ProcessName,
     IReadOnlyList<string> AllowedArguments,
     int StartupTimeoutCeilingMilliseconds,
-    string? VersionProbe = null);
+    string? VersionProbe = null,
+    int CloseTimeoutMilliseconds = 10_000,
+    bool AllowForcedTermination = false);
 
 public sealed record PolicyCeilings(
     int MaximumStepCount,

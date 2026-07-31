@@ -13,6 +13,7 @@ public enum AutomationAction
 
 public enum AutomationControlType
 {
+    Unknown,
     Button,
     CheckBox,
     ComboBox,

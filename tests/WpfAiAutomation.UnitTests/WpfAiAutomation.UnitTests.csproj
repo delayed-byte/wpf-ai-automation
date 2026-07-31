@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
@@ -10,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WpfAiAutomation.Contracts\WpfAiAutomation.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\WpfAiAutomation.FlaUI\WpfAiAutomation.FlaUI.csproj" />
     <None Include="..\Fixtures\**\*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Using Include="Xunit" />
   </ItemGroup>

@@ -6,3 +6,4 @@ TestResults/
 *.suo
 .codex/
 .claude/
+config/automation.local.json
