@@ -1,0 +1,27 @@
+{
+  "applications": {
+    "patient-demo": {
+      "executablePath": "C:\\path\\to\\PatientDemo.exe",
+      "processName": "PatientDemo",
+      "allowedArguments": [],
+      "startupTimeoutCeilingMilliseconds": 30000,
+      "versionProbe": null
+    }
+  },
+  "policy": {
+    "maximumStepCount": 100,
+    "maximumStringLength": 4096,
+    "maximumTimeoutMilliseconds": 60000,
+    "maximumTotalTimeoutMilliseconds": 300000,
+    "maximumTreeDepth": 10,
+    "maximumTreeElementCount": 1000
+  },
+  "sensitiveControls": {
+    "automationIds": ["PasswordTextBox", "PatientSsnTextBox"],
+    "redactionReplacement": "[REDACTED]"
+  },
+  "evidence": {
+    "rootDirectory": "artifacts",
+    "captureScreenshotOnFailure": true
+  }
+}

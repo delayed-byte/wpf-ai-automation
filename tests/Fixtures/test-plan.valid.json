@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "testId": "PATIENT-SEARCH-001",
+  "applicationKey": "patient-demo",
+  "testData": { "patientId": "P10023" },
+  "steps": [
+    { "action": "setText", "stepNumber": 1, "target": { "automationId": "PatientIdTextBox", "controlType": "edit" }, "value": "P10023", "timeoutMilliseconds": 5000 },
+    { "action": "invoke", "stepNumber": 2, "target": { "automationId": "SearchButton", "controlType": "button" }, "timeoutMilliseconds": 5000 },
+    { "action": "waitFor", "stepNumber": 3, "target": { "automationId": "PatientNameLabel", "controlType": "text" }, "condition": { "property": "value", "operator": "notEmpty", "pollIntervalMilliseconds": 100, "timeoutMilliseconds": 5000 } },
+    { "action": "assert", "stepNumber": 4, "target": { "automationId": "PatientNameLabel", "controlType": "text" }, "property": "value", "operator": "equals", "expectedValue": "John Smith", "timeoutMilliseconds": 5000 }
+  ]
+}

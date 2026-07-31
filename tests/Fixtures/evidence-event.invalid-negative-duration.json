@@ -1,0 +1,15 @@
+{
+  "runId": "RUN-2026-07-31-001",
+  "testId": "PATIENT-SEARCH-001",
+  "stepNumber": 2,
+  "action": "invoke",
+  "resolvedElement": null,
+  "before": null,
+  "after": null,
+  "result": "passed",
+  "errorCode": null,
+  "startedAtUtc": "2026-07-31T15:12:41.381Z",
+  "completedAtUtc": "2026-07-31T15:12:41.565Z",
+  "durationMilliseconds": -1,
+  "artifacts": []
+}

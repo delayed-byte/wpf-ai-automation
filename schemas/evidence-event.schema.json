@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wpf-ai-automation.local/schemas/evidence-event.schema.json",
+  "title": "WPF AI Automation Evidence Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "testId", "stepNumber", "action", "result", "startedAtUtc", "completedAtUtc", "durationMilliseconds"],
+  "properties": {
+    "runId": { "type": "string", "minLength": 1 },
+    "testId": { "type": "string", "minLength": 1 },
+    "stepNumber": { "type": "integer", "minimum": 1 },
+    "action": { "enum": ["setText", "invoke", "selectItem", "readElement", "waitFor", "assert", "captureScreenshot"] },
+    "resolvedElement": { "$ref": "#/$defs/element" },
+    "before": { "$ref": "#/$defs/element" },
+    "after": { "$ref": "#/$defs/element" },
+    "result": { "enum": ["passed", "failed", "skipped"] },
+    "errorCode": { "type": ["string", "null"] },
+    "startedAtUtc": { "type": "string", "format": "date-time" },
+    "completedAtUtc": { "type": "string", "format": "date-time" },
+    "durationMilliseconds": { "type": "integer", "minimum": 0 },
+    "artifacts": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["relativePath", "kind"],
+        "properties": { "relativePath": { "type": "string", "pattern": "^(?!.*\\.\\.).+$" }, "kind": { "type": "string", "minLength": 1 } }
+      }
+    }
+  },
+  "$defs": {
+    "element": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["automationId", "controlType", "isEnabled", "isVisible", "supportedPatterns"],
+      "properties": {
+        "automationId": { "type": "string" }, "name": { "type": ["string", "null"] },
+        "controlType": { "type": "string" }, "isEnabled": { "type": "boolean" }, "isVisible": { "type": "boolean" },
+        "supportedPatterns": { "type": "array", "items": { "type": "string" } }, "value": { "type": ["string", "null"] },
+        "children": { "type": ["array", "null"] }, "isTruncated": { "type": "boolean" }
+      }
+    }
+  }
+}

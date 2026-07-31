@@ -1,0 +1,25 @@
+{
+  "runId": "RUN-2026-07-31-001",
+  "testId": "PATIENT-SEARCH-001",
+  "stepNumber": 2,
+  "action": "invoke",
+  "resolvedElement": {
+    "automationId": "SearchButton",
+    "name": "Search patient",
+    "controlType": "button",
+    "isEnabled": true,
+    "isVisible": true,
+    "supportedPatterns": ["Invoke"],
+    "value": null,
+    "children": null,
+    "isTruncated": false
+  },
+  "before": null,
+  "after": null,
+  "result": "passed",
+  "errorCode": null,
+  "startedAtUtc": "2026-07-31T15:12:41.381Z",
+  "completedAtUtc": "2026-07-31T15:12:41.565Z",
+  "durationMilliseconds": 184,
+  "artifacts": [{ "relativePath": "screenshots/step-002.png", "kind": "screenshot" }]
+}

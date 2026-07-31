@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1.0",
+  "testId": "PATIENT-SEARCH-001",
+  "applicationKey": "patient-demo",
+  "steps": [
+    { "action": "click", "stepNumber": 1, "target": { "automationId": "SearchButton" } }
+  ]
+}
