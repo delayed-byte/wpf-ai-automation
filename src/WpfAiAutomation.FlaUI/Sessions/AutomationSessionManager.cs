@@ -155,7 +155,43 @@ public sealed class AutomationSessionManager : IAsyncDisposable
         }
         catch (AutomationOperationException exception)
         {
-            return Failure<T>(exception.ErrorCode, exception.Message, started);
+            return Failure(exception.ErrorCode, exception.Message, started, GetDiagnosticValue<T>(exception));
+        }
+        catch (Exception)
+        {
+            return Failure<T>(ToolErrorCode.AutomationFailure, "The UI Automation operation failed.", started);
+        }
+        finally
+        {
+            session.OperationLock.Release();
+        }
+    }
+
+    internal async Task<ToolResult<T>> ExecuteSerializedAsync<T>(
+        Func<AutomationSession, CancellationToken, Task<T>> operation,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+
+        var started = Stopwatch.GetTimestamp();
+        var session = _session;
+        if (session is not { State: AutomationSessionState.Ready })
+        {
+            return Failure<T>(ToolErrorCode.NoActiveSession, "There is no active automation session.", started);
+        }
+
+        await session.OperationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return Success(await operation(session, cancellationToken).ConfigureAwait(false), started);
+        }
+        catch (AutomationOperationException exception)
+        {
+            return Failure(exception.ErrorCode, exception.Message, started, GetDiagnosticValue<T>(exception));
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception)
         {
@@ -221,13 +257,16 @@ public sealed class AutomationSessionManager : IAsyncDisposable
         ElapsedMilliseconds(startedTimestamp),
         Guid.NewGuid().ToString("N"));
 
-    private static ToolResult<T> Failure<T>(ToolErrorCode errorCode, string message, long startedTimestamp) => new(
+    private static ToolResult<T> Failure<T>(ToolErrorCode errorCode, string message, long startedTimestamp, T? value = default) => new(
         false,
-        default,
+        value,
         errorCode,
         message,
         ElapsedMilliseconds(startedTimestamp),
         Guid.NewGuid().ToString("N"));
+
+    private static T? GetDiagnosticValue<T>(AutomationOperationException exception) =>
+        exception.DiagnosticValue is T value ? value : default;
 
     private static long ElapsedMilliseconds(long startedTimestamp) =>
         (Stopwatch.GetTimestamp() - startedTimestamp) * 1_000 / Stopwatch.Frequency;

@@ -9,9 +9,14 @@ internal sealed record ElementResolution(AutomationElement? Element, ToolErrorCo
     public bool Succeeded => Element is not null;
 }
 
-internal sealed class AutomationOperationException(ToolErrorCode errorCode, string message) : Exception(message)
+internal sealed class AutomationOperationException(
+    ToolErrorCode errorCode,
+    string message,
+    object? diagnosticValue = null) : Exception(message)
 {
     public ToolErrorCode ErrorCode { get; } = errorCode;
+
+    public object? DiagnosticValue { get; } = diagnosticValue;
 }
 
 internal static class ElementResolver

@@ -4,7 +4,7 @@ Windows-only, contract-first automation infrastructure for controlled WPF UI tes
 
 ## Build and test
 
-Run the complete Phase 1 verification from the repository root:
+Run the complete verification from the repository root:
 
 ```powershell
 dotnet test WpfAiAutomation.slnx
@@ -27,3 +27,25 @@ dotnet run --project apps/AgentServer -- inspect-patient-demo
 ```
 
 This developer-only harness launches only the configured `patient-demo` application and writes a bounded, redacted UI tree under the configured evidence directory. It accepts no executable path or arbitrary command arguments.
+
+## Local Patient Search evidence scenario
+
+The Phase 3 developer harness exercises the same SDK services used for actions,
+condition-based waits, assertions, screenshots, and evidence. It runs a fixed
+search for the seeded patient ID and writes a JSONL event stream and final run
+summary under `artifacts/<run-id>/`:
+
+```powershell
+dotnet run --project apps/AgentServer -- run-patient-search
+```
+
+To verify the failure path, use the fixed deliberately wrong expected name:
+
+```powershell
+dotnet run --project apps/AgentServer -- run-patient-search-failure
+```
+
+The failure command returns `AssertionFailed` and records a screenshot reference
+with the failing event. If any configured sensitive control is visible, the
+screenshot is conservatively fully masked rather than risking pixel-coordinate
+redaction drift across DPI settings.

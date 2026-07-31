@@ -11,5 +11,6 @@
   "startedAtUtc": "2026-07-31T15:12:41.381Z",
   "completedAtUtc": "2026-07-31T15:12:41.565Z",
   "durationMilliseconds": -1,
+  "correlationId": "corr-0001",
   "artifacts": []
 }

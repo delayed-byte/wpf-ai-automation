@@ -82,6 +82,7 @@ public static class ContractValidators
 
         ValidateRequired(evidence.RunId, "runId", policy, errors);
         ValidateRequired(evidence.TestId, "testId", policy, errors);
+        ValidateRequired(evidence.CorrelationId, "correlationId", policy, errors);
 
         if (evidence.StepNumber < 1)
         {

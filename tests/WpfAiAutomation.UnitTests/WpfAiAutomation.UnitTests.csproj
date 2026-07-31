@@ -11,6 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WpfAiAutomation.Contracts\WpfAiAutomation.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\WpfAiAutomation.Execution\WpfAiAutomation.Execution.csproj" />
     <ProjectReference Include="..\..\src\WpfAiAutomation.FlaUI\WpfAiAutomation.FlaUI.csproj" />
     <None Include="..\Fixtures\**\*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Using Include="Xunit" />

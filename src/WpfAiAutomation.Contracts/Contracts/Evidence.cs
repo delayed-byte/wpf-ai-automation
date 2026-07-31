@@ -13,4 +13,5 @@ public sealed record EvidenceEvent(
     DateTimeOffset StartedAtUtc,
     DateTimeOffset CompletedAtUtc,
     long DurationMilliseconds,
-    IReadOnlyList<EvidenceReference>? Artifacts = null);
+    IReadOnlyList<EvidenceReference>? Artifacts = null,
+    string? CorrelationId = null);

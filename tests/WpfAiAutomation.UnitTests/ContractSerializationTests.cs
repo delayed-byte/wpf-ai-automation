@@ -65,6 +65,20 @@ public sealed class ContractSerializationTests
     }
 
     [Fact]
+    public void EvidenceEventWithoutCorrelationIdentifierIsRejectedByContractValidation()
+    {
+        var evidence = new EvidenceEvent(
+            "run-001", "test-001", 1, AutomationAction.Assert, null, null, null,
+            EvidenceResult.Failed, ToolErrorCode.AssertionFailed, DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow, 0);
+
+        var validation = ContractValidators.Validate(evidence);
+
+        Assert.False(validation.IsValid);
+        Assert.Contains(validation.Errors, error => error.Field == "correlationId");
+    }
+
+    [Fact]
     public void UnknownJsonMembersAreRejected()
     {
         const string Json = """
