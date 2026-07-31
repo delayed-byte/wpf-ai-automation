@@ -96,3 +96,41 @@ manager and applies the same bounded application cleanup policy.
 The repository fixture `tests/Fixtures/test-plan.valid.json` demonstrates the
 plan JSON shape. Adjust its seeded patient data and UI IDs to match the local
 Patient Demo before calling `execute_plan`.
+
+## Phase 5: Page Objects and reviewed regression tests
+
+Phase 5 is complete. The Patient Demo suite now drives the application through
+`PatientSearchPage`, which contains the stable locators and bounded status wait
+while leaving assertions visible in each xUnit test. A class fixture starts one
+fresh, seed-restored process for the Patient Search test class, finalizes JSONL
+evidence for every test, captures a redacted screenshot on unexpected failure,
+and always closes the process.
+
+With a valid `config/automation.local.json`, run the reviewed UI regressions:
+
+```powershell
+dotnet test tests/WpfAiAutomation.PatientDemoTests -c Release
+```
+
+The suite covers an existing patient smoke path, an unknown ID, the supported
+empty-search behavior, and a deliberately unmet condition timeout. If the local
+configuration or executable is unavailable, tests marked `PatientDemoFact` are
+reported as skipped; the committed sample configuration never launches an
+arbitrary placeholder.
+
+Generated proposals must enter `tests/Generated`, which is outside test
+discovery and execution; a build-only project compiles the safe candidate in
+isolation. `prompts/generate-test.md` constrains generation and
+`prompts/review-test.md` defines the human promotion gate. The seeded unsafe
+proposal proves the pre-review rejects sleeps, coordinates, absolute paths,
+direct FlaUI access, nondeterministic identifiers, and missing Page Object,
+category, or timeout conventions. The first successful proposal and its
+comparison with the hand-written reference are recorded in
+`docs/generated-test-review.md`; it remains quarantined because promotion would
+only duplicate existing coverage.
+
+Validate quarantined candidates without executing them:
+
+```powershell
+dotnet build tests/WpfAiAutomation.GeneratedValidation -c Release
+```

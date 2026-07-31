@@ -45,15 +45,43 @@ Last updated: 2026-07-31
   executable-path, PID, filesystem, or coordinate capability.
 - JSON Lines evidence now writes exactly one compact event object per line.
 
+### Phase 5 — Page Objects and reviewed regression tests
+
+- `PatientSearchPage` hides stable Patient Demo locators and SDK synchronization
+  while keeping expected-result assertions in the xUnit tests.
+- The Patient Demo class fixture launches one fresh, seed-restored process,
+  finalizes per-test JSONL evidence, captures a redacted failure screenshot, and
+  always closes the session through asynchronous fixture cleanup.
+- Reviewed tests cover the existing-patient smoke path, unknown-patient result,
+  supported empty-ID search, and a deliberately unmet bounded wait.
+- Generated proposals are quarantined outside test discovery and execution; a
+  build-only validation project compiles the safe candidate. Generation and
+  review prompts prohibit unsafe capabilities and require human promotion.
+- The generated-code pre-review accepts the reviewed reference-shaped proposal
+  and catches every violation in the seeded unsafe/flaky example. The first
+  generated proposal was compared with the hand-written reference and left in
+  quarantine because it adds no new coverage.
+
 ## Verification
 
-The latest Phase 4 verification passed:
+The latest Phase 5 verification passed:
 
 ```powershell
 dotnet test WpfAiAutomation.slnx --no-restore -c Release
 ```
 
-Results: 33 unit tests, 1 integration test, and 1 Patient Demo test passed.
+Results: 36 unit tests, 1 integration test, and 5 Patient Demo tests passed.
+
+The quarantined safe proposal also compiled with zero warnings and errors via:
+
+```powershell
+dotnet build tests/WpfAiAutomation.GeneratedValidation --no-restore -c Release
+```
+
+The four Patient Search regressions ran directly against the configured Patient
+Demo with the MCP server and model disconnected. They used a single fixture-owned
+process, bounded SDK waits, fictional seed data restored at launch, finalized
+evidence, and deterministic cleanup.
 
 An MCP stdio transport smoke test successfully initialized the server, listed
 the allowlisted tool schemas, and called `execute_plan` against the configured
@@ -76,5 +104,6 @@ evidence with a redacted screenshot artifact.
 
 ## Next
 
-Phase 5 will add Patient Search Page Objects, reviewed deterministic regression
-tests, and the quarantined generation/review workflow.
+Phase 6 will add separate build/unit and serialized desktop-smoke CI workflows,
+artifact publication, runner preflight and orphan cleanup, dependency/security
+checks, and measured timeout baselines.

@@ -1,0 +1,15 @@
+using FlaUI.Core.AutomationElements;
+
+public sealed class GeneratedPatientSearchTests
+{
+    [Fact]
+    public void Search()
+    {
+        var executable = "C:\\unsafe\\PatientDemo.exe";
+        var generatedRun = Guid.NewGuid();
+        AutomationElement result = null!;
+        Mouse.Click(420, 240);
+        Thread.Sleep(5000);
+        Assert.NotNull(result);
+    }
+}

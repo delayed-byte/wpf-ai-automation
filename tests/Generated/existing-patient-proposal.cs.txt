@@ -1,0 +1,21 @@
+using WpfAiAutomation.PatientDemoTests.Fixtures;
+using WpfAiAutomation.PatientDemoTests.PageObjects;
+
+namespace WpfAiAutomation.GeneratedTests;
+
+public sealed class GeneratedPatientSearchTests(PatientDemoFixture fixture) : IClassFixture<PatientDemoFixture>
+{
+    [Fact]
+    [Trait("Category", "Smoke")]
+    public Task SearchForExistingPatientDisplaysSingleMatch() => fixture.RunWithFailureEvidenceAsync(
+        "search-existing-patient",
+        async (PatientSearchPage page) =>
+        {
+            await page.EnterPatientIdAsync("PM-1001");
+            await page.SearchAsync();
+
+            Assert.Equal(
+                "1 patient found.",
+                await page.WaitForSearchResultAsync("1 patient found.", TimeSpan.FromSeconds(5)));
+        });
+}

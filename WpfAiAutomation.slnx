@@ -8,6 +8,7 @@
     <Project Path="src/WpfAiAutomation.FlaUI/WpfAiAutomation.FlaUI.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/WpfAiAutomation.GeneratedValidation/WpfAiAutomation.GeneratedValidation.csproj" />
     <Project Path="tests/WpfAiAutomation.IntegrationTests/WpfAiAutomation.IntegrationTests.csproj" />
     <Project Path="tests/WpfAiAutomation.PatientDemoTests/WpfAiAutomation.PatientDemoTests.csproj" />
     <Project Path="tests/WpfAiAutomation.UnitTests/WpfAiAutomation.UnitTests.csproj" />
