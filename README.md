@@ -18,7 +18,12 @@ The solution targets .NET 8 because FlaUI 5 supports `net8.0-windows7.0`; it use
 
 JSON schemas are stored in `schemas/`; representative accepted and rejected payloads are in `tests/Fixtures/`.
 
-## Local Patient Demo inspection
+## Phase 2: Local Patient Demo inspection
+
+Phase 2 is complete. The SDK launches only an allowlisted application, owns one
+serialized FlaUI session, resolves elements by exact `AutomationId`, and emits a
+bounded, redacted UI tree. It rejects missing and ambiguous element matches
+rather than selecting a control silently.
 
 After creating a local `config/automation.local.json` from the safe sample and setting its approved Patient Demo executable path, run:
 
