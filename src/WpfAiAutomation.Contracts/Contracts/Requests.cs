@@ -36,6 +36,8 @@ public sealed record UiTreeRequest(
     int MaximumElementCount = 200,
     bool IncludeOffScreen = false);
 
+public sealed record FindElementRequest(string SessionId, ElementLocator Target);
+
 public sealed record SetTextRequest(string SessionId, ElementLocator Target, string Value);
 
 public sealed record InvokeRequest(string SessionId, ElementLocator Target);
@@ -43,6 +45,15 @@ public sealed record InvokeRequest(string SessionId, ElementLocator Target);
 public sealed record SelectItemRequest(string SessionId, ElementLocator Target, string ItemAutomationId);
 
 public sealed record ReadElementRequest(string SessionId, ElementLocator Target, AutomationProperty Property);
+
+public sealed record WaitForRequest(string SessionId, ElementLocator Target, WaitCondition Condition);
+
+public sealed record CaptureScreenshotRequest(
+    string SessionId,
+    string RunId,
+    string TestId,
+    int StepNumber,
+    string CorrelationId);
 
 public sealed record WaitCondition(
     AutomationProperty Property,

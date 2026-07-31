@@ -7,7 +7,11 @@ public static class ContractsJson
 {
     public static JsonSerializerOptions Default { get; } = CreateDefaultOptions();
 
+    private static JsonSerializerOptions Compact { get; } = new(Default) { WriteIndented = false };
+
     public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Default);
+
+    public static string SerializeCompact<T>(T value) => JsonSerializer.Serialize(value, Compact);
 
     public static T? Deserialize<T>(string json) => JsonSerializer.Deserialize<T>(json, Default);
 

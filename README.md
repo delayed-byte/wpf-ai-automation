@@ -54,3 +54,45 @@ The failure command returns `AssertionFailed` and records a screenshot reference
 with the failing event. If any configured sensitive control is visible, the
 screenshot is conservatively fully masked rather than risking pixel-coordinate
 redaction drift across DPI settings.
+
+## Phase 4: Plan execution and MCP
+
+Phase 4 is complete. `TestPlanValidator` validates the entire plan before the
+application is launched, including schema version, safe identifiers, exact
+locators, supported property/operator pairs, unique step numbers, string and
+step limits, per-step timeouts, and the configured total-timeout ceiling.
+Plan values may reference declared test data with `${name}` placeholders; other
+placeholder or expression syntax is rejected before any mutating operation.
+
+`TestPlanRunner` launches the allowlisted application, executes steps in step
+number order, stops on the first failure, marks later steps skipped, captures a
+failure screenshot when configured, closes the session, and finalizes JSONL
+evidence even when execution is cancelled. Each event in `events.jsonl` is one
+compact JSON object on one line.
+
+Start the local MCP stdio server after creating
+`config/automation.local.json`:
+
+```powershell
+dotnet run --project apps/AgentServer -- mcp
+```
+
+The server exposes only these tools:
+
+```text
+launch_application   close_application   inspect_ui
+find_element         read_element        set_text
+invoke               select_item         wait_for
+assert_state         capture_screenshot  execute_plan
+```
+
+Tool inputs use the contract records under a `request` property; `execute_plan`
+uses a `plan` property. Generated schemas disallow additional properties and
+contain no executable-path, process-ID, filesystem, command, or coordinate
+arguments. Server diagnostics are written to stderr so stdout remains reserved
+for MCP protocol messages. Closing the MCP client disposes the singleton session
+manager and applies the same bounded application cleanup policy.
+
+The repository fixture `tests/Fixtures/test-plan.valid.json` demonstrates the
+plan JSON shape. Adjust its seeded patient data and UI IDs to match the local
+Patient Demo before calling `execute_plan`.

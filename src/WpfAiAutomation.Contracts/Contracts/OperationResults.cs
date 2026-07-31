@@ -34,3 +34,24 @@ public sealed record EvidenceRunSummary(
     int FailedSteps,
     int SkippedSteps,
     string RelativeDirectory);
+
+public sealed record PlanStepResult(
+    int StepNumber,
+    AutomationAction Action,
+    EvidenceResult Result,
+    ToolErrorCode? ErrorCode,
+    string? Message,
+    long DurationMilliseconds,
+    string CorrelationId,
+    IReadOnlyList<EvidenceReference>? Evidence = null);
+
+public sealed record PlanExecutionSummary(
+    string RunId,
+    string TestId,
+    DateTimeOffset StartedAtUtc,
+    DateTimeOffset CompletedAtUtc,
+    int PassedSteps,
+    int FailedSteps,
+    int SkippedSteps,
+    IReadOnlyList<PlanStepResult> Steps,
+    EvidenceRunSummary Evidence);

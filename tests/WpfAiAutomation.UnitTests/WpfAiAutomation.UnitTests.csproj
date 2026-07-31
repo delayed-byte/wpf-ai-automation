@@ -10,6 +10,7 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\apps\AgentServer\AgentServer.csproj" />
     <ProjectReference Include="..\..\src\WpfAiAutomation.Contracts\WpfAiAutomation.Contracts.csproj" />
     <ProjectReference Include="..\..\src\WpfAiAutomation.Execution\WpfAiAutomation.Execution.csproj" />
     <ProjectReference Include="..\..\src\WpfAiAutomation.FlaUI\WpfAiAutomation.FlaUI.csproj" />

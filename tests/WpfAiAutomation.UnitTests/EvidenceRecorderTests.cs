@@ -23,7 +23,9 @@ public sealed class EvidenceRecorderTests
             var summaryPath = Path.Combine(directory, "run-001", "run.json");
             Assert.True(File.Exists(eventsPath));
             Assert.True(File.Exists(summaryPath));
-            Assert.Contains("\"correlationId\": \"corr-001\"", await File.ReadAllTextAsync(eventsPath), StringComparison.Ordinal);
+            var eventLines = await File.ReadAllLinesAsync(eventsPath);
+            Assert.Single(eventLines);
+            Assert.Contains("\"correlationId\":\"corr-001\"", eventLines[0], StringComparison.Ordinal);
             Assert.Equal(1, summary.PassedSteps);
             Assert.Equal(0, summary.FailedSteps);
         }

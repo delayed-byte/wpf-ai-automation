@@ -15,12 +15,17 @@ public sealed class UiInspector
         _ceilings = ceilings;
     }
 
-    public Task<ToolResult<ElementSnapshot>> FindAsync(AutomationSessionManager sessionManager, ElementLocator locator, CancellationToken cancellationToken = default)
+    public Task<ToolResult<ElementSnapshot>> FindAsync(AutomationSessionManager sessionManager, FindElementRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sessionManager);
         return sessionManager.ExecuteSerializedAsync(session =>
         {
-            var resolution = ElementResolver.Resolve(session, locator);
+            if (!string.Equals(session.SessionId, request.SessionId, StringComparison.Ordinal))
+            {
+                throw new AutomationOperationException(ToolErrorCode.NoActiveSession, "The request does not reference the active session.");
+            }
+
+            var resolution = ElementResolver.Resolve(session, request.Target);
             if (!resolution.Succeeded)
             {
                 throw new AutomationOperationException(resolution.ErrorCode ?? ToolErrorCode.AutomationFailure, resolution.Message ?? "Element resolution failed.");

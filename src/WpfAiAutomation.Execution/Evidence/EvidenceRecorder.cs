@@ -71,7 +71,7 @@ public sealed class EvidenceRecorder : IAsyncDisposable
         await _writeLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await _eventWriter.WriteLineAsync(ContractsJson.Serialize(evidenceEvent).AsMemory(), cancellationToken).ConfigureAwait(false);
+            await _eventWriter.WriteLineAsync(ContractsJson.SerializeCompact(evidenceEvent).AsMemory(), cancellationToken).ConfigureAwait(false);
             await _eventWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
             Count(evidenceEvent.Result);
         }
