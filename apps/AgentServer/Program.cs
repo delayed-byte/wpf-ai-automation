@@ -8,14 +8,14 @@ using WpfAiAutomation.FlaUI;
 
 if (args.SequenceEqual(["inspect-patient-demo"], StringComparer.Ordinal))
 {
-    const string ConfigurationPath = "config/automation.local.json";
-    if (!File.Exists(ConfigurationPath))
+    var configurationPath = ConfigurationPathResolver.FindConfigurationPath();
+    if (configurationPath is null)
     {
-        Console.Error.WriteLine($"Create {ConfigurationPath} from config/automation.sample.json before running this local inspection harness.");
+        Console.Error.WriteLine($"Create {ConfigurationPathResolver.RelativeConfigurationPath} from config/automation.sample.json before running this local inspection harness.");
         return;
     }
 
-    var configuration = ContractsJson.Deserialize<AutomationConfiguration>(await File.ReadAllTextAsync(ConfigurationPath));
+    var configuration = ContractsJson.Deserialize<AutomationConfiguration>(await File.ReadAllTextAsync(configurationPath));
     await using var harness = new PatientDemoInspectionHarness(configuration ?? throw new InvalidOperationException("Automation configuration is empty."));
     var result = await harness.CaptureAsync();
 
@@ -26,14 +26,14 @@ if (args.SequenceEqual(["inspect-patient-demo"], StringComparer.Ordinal))
 if (args.SequenceEqual(["run-patient-search"], StringComparer.Ordinal)
     || args.SequenceEqual(["run-patient-search-failure"], StringComparer.Ordinal))
 {
-    const string ConfigurationPath = "config/automation.local.json";
-    if (!File.Exists(ConfigurationPath))
+    var configurationPath = ConfigurationPathResolver.FindConfigurationPath();
+    if (configurationPath is null)
     {
-        Console.Error.WriteLine($"Create {ConfigurationPath} from config/automation.sample.json before running this local scenario harness.");
+        Console.Error.WriteLine($"Create {ConfigurationPathResolver.RelativeConfigurationPath} from config/automation.sample.json before running this local scenario harness.");
         return;
     }
 
-    var configuration = ContractsJson.Deserialize<AutomationConfiguration>(await File.ReadAllTextAsync(ConfigurationPath));
+    var configuration = ContractsJson.Deserialize<AutomationConfiguration>(await File.ReadAllTextAsync(configurationPath));
     await using var harness = new PatientSearchScenarioHarness(configuration ?? throw new InvalidOperationException("Automation configuration is empty."));
     var result = await harness.RunAsync(args.SequenceEqual(["run-patient-search-failure"], StringComparer.Ordinal));
     Console.WriteLine(result.Succeeded ? result.Value : $"{result.ErrorCode}: {result.Message}");
@@ -42,14 +42,14 @@ if (args.SequenceEqual(["run-patient-search"], StringComparer.Ordinal)
 
 if (args.SequenceEqual(["mcp"], StringComparer.Ordinal))
 {
-    const string ConfigurationPath = "config/automation.local.json";
-    if (!File.Exists(ConfigurationPath))
+    var configurationPath = ConfigurationPathResolver.FindConfigurationPath();
+    if (configurationPath is null)
     {
-        Console.Error.WriteLine($"Create {ConfigurationPath} from config/automation.sample.json before starting the MCP server.");
+        Console.Error.WriteLine($"Create {ConfigurationPathResolver.RelativeConfigurationPath} from config/automation.sample.json before starting the MCP server.");
         return;
     }
 
-    var configuration = ContractsJson.Deserialize<AutomationConfiguration>(await File.ReadAllTextAsync(ConfigurationPath))
+    var configuration = ContractsJson.Deserialize<AutomationConfiguration>(await File.ReadAllTextAsync(configurationPath))
         ?? throw new InvalidOperationException("Automation configuration is empty.");
     var builder = Host.CreateApplicationBuilder(args);
     builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Trace);
@@ -76,4 +76,4 @@ if (args.SequenceEqual(["mcp"], StringComparer.Ordinal))
     return;
 }
 
-Console.Error.WriteLine("Use 'mcp', 'inspect-patient-demo', 'run-patient-search', or 'run-patient-search-failure' with config/automation.local.json.");
+Console.Error.WriteLine($"Use 'mcp', 'inspect-patient-demo', 'run-patient-search', or 'run-patient-search-failure' with {ConfigurationPathResolver.RelativeConfigurationPath}.");

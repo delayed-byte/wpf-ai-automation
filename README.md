@@ -77,6 +77,50 @@ Start the local MCP stdio server after creating
 dotnet run --project apps/AgentServer -- mcp
 ```
 
+### Claude Desktop setup
+
+1. Create `config/automation.local.json` from `config/automation.sample.json`
+   and set the approved Patient Demo executable path.
+2. Build the executable used by Claude Desktop:
+
+   ```powershell
+   dotnet build apps/AgentServer -c Release
+   ```
+
+3. Fully quit Claude Desktop, then open its configuration file. For the Windows
+   Store installation used during development, it is:
+
+   ```text
+   C:\Users\<user>\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json
+   ```
+
+4. Add the following `mcpServers` property at the **root** of the JSON document.
+   Do not place it under `preferences` or `preferences.epitaxyPrefs`:
+
+   ```json
+   {
+     "mcpServers": {
+       "wpf-automation-server": {
+         "type": "stdio",
+         "command": "C:\\Users\\<user>\\source\\repos\\wpf-ai-automation\\apps\\AgentServer\\bin\\Release\\net8.0-windows7.0\\AgentServer.exe",
+         "args": ["mcp"]
+       }
+     }
+   }
+   ```
+
+   Preserve the document's existing root properties; this snippet shows only the
+   property to add. Use the actual absolute path to `AgentServer.exe`.
+
+5. Restart Claude Desktop. In a normal desktop chat, open **Connectors** (or
+   Developer Settings) and verify that `wpf-automation-server` is connected and
+   its tools are listed.
+
+Local MCP servers configured in `claude_desktop_config.json` are not available
+in Cowork or on claude.ai. To use a configuration outside the repository, set
+the `WPF_AI_AUTOMATION_CONFIG` environment variable to its absolute path before
+starting Claude Desktop.
+
 The server exposes only these tools:
 
 ```text
