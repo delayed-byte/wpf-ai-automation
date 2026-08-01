@@ -12,6 +12,13 @@ dotnet test WpfAiAutomation.slnx
 
 The solution targets .NET 8 because FlaUI 5 supports `net8.0-windows7.0`; it uses central package management. `config/automation.sample.json` is intentionally non-runnable: replace its executable placeholder only in a local, uncommitted configuration file once the Patient Demo source is available.
 
+## Public repository hygiene
+
+Keep executable paths, MCP client configuration, credentials, certificates, and
+real patient data out of commits. The repository ignores local configuration
+files such as `config/*.local.json` and `.mcp.json`; use the committed sample
+files as templates and keep any real values only in your local copies.
+
 ## Phase 1 boundaries
 
 `WpfAiAutomation.Contracts` is transport-neutral and contains immutable contracts, JSON settings, validation, configuration models, and stable error codes. `WpfAiAutomation.FlaUI` and `WpfAiAutomation.Execution` reference only Contracts. The MCP package is referenced exclusively by `apps/AgentServer`.
