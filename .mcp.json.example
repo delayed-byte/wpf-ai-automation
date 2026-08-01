@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "wcf-automation-server": {
+      "type": "stdio",
+      "command": "C:\\path\\to\\wpf-ai-automation\\apps\\AgentServer\\bin\\Release\\net8.0-windows7.0\\AgentServer.exe",
+      "args": ["mcp"]
+    }
+  }
+}

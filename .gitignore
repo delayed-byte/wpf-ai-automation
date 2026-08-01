@@ -6,4 +6,5 @@ TestResults/
 *.suo
 .codex/
 .claude/
+.mcp.json
 config/automation.local.json
