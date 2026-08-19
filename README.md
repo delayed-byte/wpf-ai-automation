@@ -227,3 +227,8 @@ Evidence reports P50/P95/max timings for startup, lookup (`waitFor`), action,
 and scenario durations in `artifacts/timing-summary/`. Treat the resulting
 percentiles as the source for changing defaults: revise the configured ceilings
 only after a sustained baseline change, not in response to an isolated timeout.
+
+## License
+
+Published for portfolio and evaluation purposes. All rights reserved; no license
+is granted for reuse.
